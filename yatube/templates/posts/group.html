@@ -1,0 +1,14 @@
+{% extends "misc/base.html" %}
+{% block title %}Записи сообщества {{ group.title }}{% endblock %}
+{% block header %}{{ group.title }}{% endblock %}
+{% block content %}
+
+    <p>{{ group.description }}</p>
+    {% for post in page %}
+    <h3>
+        Автор: {{ post.author.get_full_name }}, дата публикации: {{ post.pub_date_format }}
+    </h3>
+    <p> {{ post.text }}</p>
+    {% endfor %}
+{% include "misc/paginator.html" %}
+{% endblock %}
