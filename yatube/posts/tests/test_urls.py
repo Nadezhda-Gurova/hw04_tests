@@ -39,7 +39,7 @@ class TaskURLTests(TestCase):
             f'/{self.user.username}/{self.post.id}/': HTTPStatus.OK,
             f'/{self.user.username}/{self.post.id}/edit/':
                 HTTPStatus.FOUND,
-            }
+        }
         for url_address, response_code in pages.items():
             with self.subTest(address=url_address):
                 response = self.authorized_client.get(url_address)
