@@ -1,5 +1,6 @@
 from django.test import TestCase
-from ..models import Post, Group, User
+
+from ..models import Group, Post, User
 
 
 class TaskModelTest(TestCase):

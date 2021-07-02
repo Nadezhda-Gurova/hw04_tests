@@ -1,8 +1,8 @@
-from django.test import TestCase, Client
-from django.urls import reverse
 from django import forms
+from django.test import Client, TestCase
+from django.urls import reverse
 
-from ..models import User, Post, Group
+from ..models import Group, Post, User
 
 
 class TaskPagesTests(TestCase):
@@ -10,6 +10,12 @@ class TaskPagesTests(TestCase):
         self.user = User.objects.create_user(username='StasBasov')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        self.home_page = 'index'
+        self.group_page = 'group'
+        self.new_post_page = 'new_post'
+        self.post_page = 'posts'
+        self.post_edit_page = 'post_edit'
+        self.profile = 'profile'
         self.group = Group.objects.create(
             title='Тестовый заголовок',
             slug='test-slug',
@@ -28,11 +34,11 @@ class TaskPagesTests(TestCase):
     def test_pages_use_correct_template(self):
         """Функция проверяет шаблон при обращении к view-классам."""
         templates_pages_names = {
-            'misc/index.html': reverse('index'),
+            'misc/index.html': reverse(self.home_page),
             'posts/group.html': (
-                reverse('group', kwargs={'slug': 'test-slug'})
+                reverse(self.group_page, kwargs={'slug': 'test-slug'})
             ),
-            'posts/new.html': reverse('new_post'),
+            'posts/new.html': reverse(self.new_post_page),
         }
         for template, reverse_name in templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):
@@ -41,7 +47,7 @@ class TaskPagesTests(TestCase):
 
     def test_home_page_shows_correct_context(self):
         """Функция проверяет словарь контекста главной страницы."""
-        response = self.authorized_client.get(reverse('index'))
+        response = self.authorized_client.get(reverse(self.home_page))
         first_object = response.context['page'][0]
         post_id = first_object.id
         post_text = first_object.text
@@ -55,19 +61,19 @@ class TaskPagesTests(TestCase):
     def test_group_page_shows_correct_context(self):
         """Функция проверяет словарь контекста страницы группы."""
         response = self.authorized_client.get(
-            reverse('group', kwargs={'slug': 'test-slug'}))
-        test_group = response.context['group']
+            reverse(self.group_page, kwargs={'slug': 'test-slug'}))
+        test_group = response.context[self.group_page]
         test_post = response.context['page'][0]
         self.assertEqual(test_group.title, self.group.title)
         self.assertEqual(test_post.text, self.post.text)
 
     def test_post_page_shows_correct_context(self):
         """Функция проверяет словарь контекста страницы поста."""
-        response = self.authorized_client.get(reverse('posts', kwargs={
+        response = self.authorized_client.get(reverse(self.post_page, kwargs={
             'username': self.user.username, 'post_id': self.post.id}))
-        profile = {'username': self.post.author.username,
+        profile = {'author': self.post.author,
                    'number_of_posts': self.user.posts.count(),
-                   'posts': self.post}
+                   'post': self.post}
         for value, expect in profile.items():
             with self.subTest(value=value):
                 context = response.context[value]
@@ -75,7 +81,7 @@ class TaskPagesTests(TestCase):
 
     def test_new_post_page_shows_correct_context(self):
         """Функция проверяет форму страницы создания поста."""
-        response = self.authorized_client.get(reverse('new_post'))
+        response = self.authorized_client.get(reverse(self.new_post_page))
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
@@ -87,9 +93,11 @@ class TaskPagesTests(TestCase):
 
     def test_post_edit_page_shows_correct_context(self):
         """Функция проверяет форму страницы редактирования поста."""
-        response = self.authorized_client.get(reverse('post_edit', kwargs={
-            'username': self.user.username,
-            'post_id': self.post.id}))
+        response = self.authorized_client.get(reverse(self.post_edit_page,
+            kwargs={'username': self.user.username,
+                    'post_id': self.post.id
+                    }
+                    ))
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
@@ -101,21 +109,27 @@ class TaskPagesTests(TestCase):
 
     def test_profile_page_shows_correct_context(self):
         """Функция проверяет форму страницы пользователя."""
-        response = self.authorized_client.get(reverse('profile', kwargs={
+        response = self.authorized_client.get(reverse(self.profile, kwargs={
             'username': self.user.username}))
-        profile = {'user_profile': self.user,
+        test_post = response.context['page'][0]
+        post_text = test_post.text
+        post_author = test_post.author
+        post_group = test_post.group
+        profile = {'author': self.user,
                    'number_of_posts': self.user.posts.count(),
-                   'latest_post_id': response.context['page'][0].id,
                    }
         for value, expect in profile.items():
             with self.subTest(value=value):
                 context = response.context[value]
                 self.assertEqual(context, expect)
+        self.assertEqual(post_text, self.post_2.text)
+        self.assertEqual(post_author, self.post_2.author)
+        self.assertEqual(post_group, self.post_2.group)
 
     def test_post_on_page_index(self):
         """Функция проверяет, что при создании поста, он появляется на главной
         странице."""
-        response = self.authorized_client.get(reverse('index'))
+        response = self.authorized_client.get(reverse(self.home_page))
         first_object = response.context['page'][0]
         post_text = first_object.text
         post_author = first_object.author
@@ -128,7 +142,7 @@ class TaskPagesTests(TestCase):
         """Функция проверяет, что при создании поста,
         он появляется странице группы."""
         response = self.authorized_client.get(
-            reverse('group', kwargs={'slug': 'test-slug'}))
+            reverse(self.group_page, kwargs={'slug': 'test-slug'}))
         first_object = response.context['page'][0]
         post_text_0 = first_object.text
         post_author_0 = first_object.author
@@ -141,7 +155,7 @@ class TaskPagesTests(TestCase):
         """Функция проверяет, что созданный пост не попал в группу,
         для которой не был предназначен"""
         response = self.authorized_client.get(
-            reverse('group', kwargs={'slug': 'test-slug-2'}))
+            reverse(self.group_page, kwargs={'slug': 'test-slug-2'}))
         first_object = response.context['page'][0]
         self.assertNotEqual(first_object, self.post)
 
@@ -150,6 +164,9 @@ class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.home_page = 'index'
+        cls.group_page = 'group'
+        cls.profile = 'profile'
         cls.user = User.objects.create_user(username='StasBasov')
         cls.group = Group.objects.create(
             title='Тестовый заголовок',
@@ -165,35 +182,35 @@ class PaginatorViewsTest(TestCase):
             )
 
     def test_index_first_page_contains_ten_records(self):
-        response = self.client.get(reverse('index'))
+        response = self.client.get(reverse(self.home_page))
         # Проверка: количество постов на первой странице равно 10.
         self.assertEqual(len(response.context.get('page')), 10)
 
     def test_index_second_page_contains_three_records(self):
         # Проверка: на второй странице должно быть три поста.
-        response = self.client.get(reverse('index') + '?page=2')
+        response = self.client.get(reverse(self.home_page) + '?page=2')
         self.assertEqual(len(response.context.get('page')), 3)
 
     def test_group_first_page_contains_ten_records(self):
         response = self.client.get(
-            reverse('group', kwargs={'slug': 'test-slug'}))
+            reverse(self.group_page, kwargs={'slug': 'test-slug'}))
         # Проверка: количество постов на первой странице равно 10.
         self.assertEqual(len(response.context.get('page')), 10)
 
     def test_group_second_page_contains_three_records(self):
         # Проверка: на второй странице должно быть три поста.
         response = self.client.get(
-            reverse('group', kwargs={'slug': 'test-slug'}) + '?page=2')
+            reverse(self.group_page, kwargs={'slug': 'test-slug'}) + '?page=2')
         self.assertEqual(len(response.context.get('page')), 3)
 
     def test_profile_first_page_contains_ten_records(self):
-        response = self.client.get(reverse('profile', kwargs={
+        response = self.client.get(reverse(self.profile, kwargs={
             'username': self.user.username}))
         # Проверка: количество постов на первой странице равно 10.
         self.assertEqual(len(response.context.get('page')), 10)
 
     def test_profile_second_page_contains_three_records(self):
         # Проверка: на второй странице должно быть три поста.
-        response = self.client.get(reverse('profile', kwargs={
+        response = self.client.get(reverse(self.profile, kwargs={
             'username': self.user.username}) + '?page=2')
         self.assertEqual(len(response.context.get('page')), 3)
