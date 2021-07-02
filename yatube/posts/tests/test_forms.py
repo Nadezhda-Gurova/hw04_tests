@@ -44,9 +44,10 @@ class TaskCreateFormTests(TestCase):
         }
         self.authorized_client.post(reverse('post_edit', kwargs={
             'username': self.user.username, 'post_id': self.post.id
-        }),
-                                    data=form_data
-                                    )
+        }
+        ),
+            data=form_data
+        )
         self.post.refresh_from_db()
         self.assertEqual(self.post.text, form_data['text'])
 

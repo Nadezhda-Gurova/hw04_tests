@@ -80,4 +80,3 @@ class TaskURLTests(TestCase):
         self.assertRedirects(
             response,
             f'/auth/login/?next=/{self.user_2.username}/{self.post.id}/edit/')
-

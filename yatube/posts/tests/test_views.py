@@ -93,9 +93,11 @@ class TaskPagesTests(TestCase):
 
     def test_post_edit_page_shows_correct_context(self):
         """Функция проверяет форму страницы редактирования поста."""
-        response = self.authorized_client.get(reverse(self.post_edit_page,
-            kwargs={'username': self.user.username,
-                    'post_id': self.post.id
+        response = self.authorized_client.get(
+            reverse(self.post_edit_page,
+                    kwargs={
+                        'username': self.user.username,
+                        'post_id': self.post.id
                     }
                     ))
         form_fields = {

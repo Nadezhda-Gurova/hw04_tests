@@ -30,5 +30,3 @@ class Post(models.Model):
     @property
     def pub_date_format(self):
         return self.pub_date.strftime('%d %b %Y')
-
-
