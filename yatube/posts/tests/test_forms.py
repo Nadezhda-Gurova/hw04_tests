@@ -12,9 +12,10 @@ class TaskCreateFormTests(TestCase):
         cls.user = User.objects.create_user(username='StasBasov')
         cls.authorized_client = Client()
         cls.authorized_client.force_login(cls.user)
+        cls.test_slug = 'test-slug'
         cls.group = Group.objects.create(
             title='Тестовый заголовок',
-            slug='test-slug',
+            slug=cls.test_slug,
             description='Тестовое описание группы')
         cls.post = Post.objects.create(author=cls.user,
                                        text='Тестовый текст поста',

@@ -19,11 +19,12 @@ class TaskURLTests(TestCase):
         self.authorized_client.force_login(self.user)
         self.authorized_client.force_login(self.user_2)
         self.homepage = '/'
-        self.group_page = '/group/test-slug/'
+        self.test_slug = 'test-slug'
+        self.group_page = f'/group/{self.test_slug}/'
         self.new_page = '/new/'
         self.group = Group.objects.create(
             title='Тестовый заголовок',
-            slug='test-slug',
+            slug=self.test_slug,
             description='Тестовое описание группы'
         )
         self.post = Post.objects.create(author=self.user,

@@ -16,16 +16,18 @@ class TaskPagesTests(TestCase):
         self.post_page = 'posts'
         self.post_edit_page = 'post_edit'
         self.profile = 'profile'
+        self.test_slug = 'test-slug'
+        self.test_slug_2 = 'test-slug-2'
         self.group = Group.objects.create(
             title='Тестовый заголовок',
-            slug='test-slug',
+            slug=self.test_slug,
             description='Тестовое описание группы')
         self.post = Post.objects.create(author=self.user,
                                         text='Тестовый текст поста',
                                         group=self.group)
         self.group_2 = Group.objects.create(
             title='Тестовый заголовок 2',
-            slug='test-slug-2',
+            slug=self.test_slug_2,
             description='Тестовое описание группы 2')
         self.post_2 = Post.objects.create(author=self.user,
                                           text='Тестовый текст поста 2',
@@ -36,7 +38,7 @@ class TaskPagesTests(TestCase):
         templates_pages_names = {
             'misc/index.html': reverse(self.home_page),
             'posts/group.html': (
-                reverse(self.group_page, kwargs={'slug': 'test-slug'})
+                reverse(self.group_page, kwargs={'slug': self.test_slug})
             ),
             'posts/new.html': reverse(self.new_post_page),
         }
@@ -61,7 +63,7 @@ class TaskPagesTests(TestCase):
     def test_group_page_shows_correct_context(self):
         """Функция проверяет словарь контекста страницы группы."""
         response = self.authorized_client.get(
-            reverse(self.group_page, kwargs={'slug': 'test-slug'}))
+            reverse(self.group_page, kwargs={'slug': self.test_slug}))
         test_group = response.context[self.group_page]
         test_post = response.context['page'][0]
         self.assertEqual(test_group.title, self.group.title)
@@ -144,7 +146,7 @@ class TaskPagesTests(TestCase):
         """Функция проверяет, что при создании поста,
         он появляется странице группы."""
         response = self.authorized_client.get(
-            reverse(self.group_page, kwargs={'slug': 'test-slug'}))
+            reverse(self.group_page, kwargs={'slug': self.test_slug}))
         first_object = response.context['page'][0]
         post_text_0 = first_object.text
         post_author_0 = first_object.author
@@ -157,7 +159,7 @@ class TaskPagesTests(TestCase):
         """Функция проверяет, что созданный пост не попал в группу,
         для которой не был предназначен"""
         response = self.authorized_client.get(
-            reverse(self.group_page, kwargs={'slug': 'test-slug-2'}))
+            reverse(self.group_page, kwargs={'slug': self.test_slug_2}))
         first_object = response.context['page'][0]
         self.assertNotEqual(first_object, self.post)
 
@@ -169,6 +171,7 @@ class PaginatorViewsTest(TestCase):
         cls.home_page = 'index'
         cls.group_page = 'group'
         cls.profile = 'profile'
+        cls.test_slug = 'test-slug'
         cls.user = User.objects.create_user(username='StasBasov')
         cls.group = Group.objects.create(
             title='Тестовый заголовок',
@@ -195,14 +198,15 @@ class PaginatorViewsTest(TestCase):
 
     def test_group_first_page_contains_ten_records(self):
         response = self.client.get(
-            reverse(self.group_page, kwargs={'slug': 'test-slug'}))
+            reverse(self.group_page, kwargs={'slug': self.test_slug}))
         # Проверка: количество постов на первой странице равно 10.
         self.assertEqual(len(response.context.get('page')), 10)
 
     def test_group_second_page_contains_three_records(self):
         # Проверка: на второй странице должно быть три поста.
         response = self.client.get(
-            reverse(self.group_page, kwargs={'slug': 'test-slug'}) + '?page=2')
+            reverse(self.group_page, kwargs={'slug': self.test_slug})
+            + '?page=2')
         self.assertEqual(len(response.context.get('page')), 3)
 
     def test_profile_first_page_contains_ten_records(self):
